@@ -1,11 +1,12 @@
 const venom = require('venom-bot');
-
 const express = require('express');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-  venom
+let client; // Variável global para armazenar o client
+
+venom
   .create({
     session: 'meu-bot', // Nome da sessão
     headless: true, // Impede a abertura do navegador
@@ -13,6 +14,13 @@ const PORT = process.env.PORT || 3000;
   })
   .then((client) => start(client))
   .catch((erro) => console.log(erro));
+function start(client) {
+  client.onMessage(async (message) => {
+    if (message.body.toLowerCase() === 'oi') {
+      await client.sendText(message.from, 'Olá! Como posso ajudar?');
+    }
+  });
+}
 
 function start(client) {
   client.onMessage(async (message) => {
@@ -22,13 +30,17 @@ function start(client) {
   });
 }
 
-
 app.get('/', (req, res) => {
   res.send('Venom-Bot está rodando!');
 });
 
 app.get('/send/:number/:message', async (req, res) => {
   const { number, message } = req.params;
+  
+  if (!client) {
+    return res.status(500).send('Bot não inicializado!');
+  }
+
   try {
     await client.sendText(`${number}@c.us`, message);
     res.send('Mensagem enviada!');
@@ -40,5 +52,3 @@ app.get('/send/:number/:message', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
-
-
